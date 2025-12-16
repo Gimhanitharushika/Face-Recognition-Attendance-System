@@ -1,0 +1,81 @@
+import cv2
+import face_recognition
+import os
+
+# Load known face encodings and names
+known_face_encodings = []
+known_face_names = []
+
+# Path to the folder containing images of known faces
+known_faces_dir = "known_faces"
+
+# Loop through all images in the "known_faces" folder to load encodings
+for filename in os.listdir(known_faces_dir):
+    if filename.endswith(".jpg") or filename.endswith(".png"):
+        print(f"🔍 Processing file: {filename}")
+        
+        image_path = os.path.join(known_faces_dir, filename)
+        image = face_recognition.load_image_file(image_path)
+        
+        # Get face encoding
+        encodings = face_recognition.face_encodings(image)
+        
+        if encodings:
+            encoding = encodings[0]  # Only take the first face encoding
+            known_face_encodings.append(encoding)
+            known_face_names.append(os.path.splitext(filename)[0])  # Use the filename (without extension) as the name
+            print(f"✅ Encoding added for: {filename}")
+        else:
+            print(f"❌ No face detected in: {filename}")
+
+print("✅ Known faces loaded successfully!")
+
+# Start video capture
+video_capture = cv2.VideoCapture(0)
+
+while True:
+    # Capture frame-by-frame
+    ret, frame = video_capture.read()
+    
+    # Convert the image from BGR (OpenCV default) to RGB (face_recognition uses RGB)
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    # Find all face locations in the frame
+    face_locations = face_recognition.face_locations(rgb_frame, model="hog")  # Change to "cnn" if using GPU
+
+    # Check if any face is detected
+    if face_locations:
+        # Compute face encodings only if a face is detected
+        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        
+        for face_encoding in face_encodings:
+            # Compare the detected face with known faces
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            name = "Unknown"  # Default name if no match is found
+
+            # Check if any face matches
+            if True in matches:
+                # Find the first match
+                first_match_index = matches.index(True)
+                name = known_face_names[first_match_index]
+
+            print(f"Detected face: {name}")  # Print the name of the person detected
+
+            # Display name on the frame
+            for (top, right, bottom, left) in face_locations:
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+                cv2.putText(frame, name, (left, top-10), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 255, 0), 1)
+
+    else:
+        print("No face detected!")
+
+    # Display the resulting frame
+    cv2.imshow("Video", frame)
+
+    # Break loop with 'q'
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+# Release video capture and close windows
+video_capture.release()
+cv2.destroyAllWindows()

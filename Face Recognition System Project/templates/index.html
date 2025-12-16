@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        .content {
+            margin-top: 100px;
+        }
+        h1 {
+            color: #333;
+            font-size: 36px; /* Increase font size */
+            text-transform: uppercase; /* Convert text to uppercase */
+            font-weight: bold; /* Optional: Make it bold */
+        }
+        h2 {
+            font-size: 18px;
+            margin-right: 10px; /* Adjust space between h2 and h3 */
+        }
+        h3 {
+            font-size: 18px;
+        }
+        /* Move only the "New Registration" button to the top-left */
+.registration-button {
+    position: absolute;
+    top: 10px;  /* Adjust the vertical position */
+    right: 50px; /* Move it to the right side */
+    background-color: darkblue;
+    color: white;
+    border: none;
+    padding: 15px 25px;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.registration-button:hover {
+    background-color: #005f73;
+}
+        /* Flex container for the buttons */
+        .buttons-container {
+            display: flex;
+            justify-content: space-between; /* Space buttons between left and right */
+            gap: 20px; /* Space between buttons */
+            margin-top: 50px;
+            padding: 0 5px; /* Add padding to control the distance from the edges */
+        }
+        
+
+        /* Styling for buttons */
+        .nav-button {
+            background-color: #008CBA; /* Blue color */
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        /* Move only the "New Registration" button upwards */
+.nav-button:first-child {
+    position: relative;
+    top: -20px; /* Move it upwards by 20px, adjust as needed */
+}
+
+        .nav-button:hover {
+            background-color: #005f73; /* Darker blue on hover */
+        }
+
+        /* Flex container to align headings side by side */
+        .headings-container {
+            display: flex;
+            justify-content: flex-start; /* Align items to the left */
+            width: 80%;
+            margin: 0 auto;
+            gap: 20px;  /* Adjust this gap */
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        img {
+            border: 3px solid black;
+            margin-top: 10px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        /* Webcam Control Buttons */
+        #start-webcam-btn, #stop-webcam-btn {
+            margin: 10px;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #start-webcam-btn {
+            background: #008CBA;
+            color: white;
+        }
+        #start-webcam-btn:hover {
+            background: #005f73;
+        }
+        #stop-webcam-btn {
+            background: #f44336;
+            color: white;
+        }
+        #stop-webcam-btn:hover {
+            background: #b71c1c;
+        }
+         /* Styles for the date and time */
+         #date-time {
+            margin-top: 20px;
+            font-size: 25px;
+            color: darkred;
+        }
+
+        
+        /* Break date and time into two lines */
+        #date-time div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Face Recognition Attendance System</h1>
+
+   
+
+    <!-- Move "New Registration" button outside of the buttons-container -->
+    <button class="registration-button" onclick="window.location.href='/registration'">New Registration</button>
+
+
+    <div style="margin-top: 100px;"></div>
+     <!-- Current Date and Time (Moved below heading) -->
+     <div id="date-time">
+        <div id="current-date"></div>
+        <div id="current-time"></div>
+    </div>
+    <div style="width: 50%; margin: 20px auto; text-align: center;">
+        <marquee behavior="scroll" direction="left" scrollamount="5" style="font-size: 20px; font-weight: bold; color: darkblue;">
+            Live Webcam Feed is Available Here !!!
+        </marquee>
+    </div>
+
+    
+    <!-- Attendance Table -->
+    <h2>Attendance Records</h2>
+    <table id="attendance-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Attendance data will be inserted here -->
+        </tbody>
+    </table>
+
+    <!-- Placeholder for webcam feed -->
+    <img id="videoFeed" src="" width="640" height="480" style="display:none;">
+
+    <!-- Buttons to control webcam -->
+    <button id="start-webcam-btn" onclick="startWebcam()">Start Webcam</button>
+    <button id="stop-webcam-btn" onclick="stopWebcam()">Stop Webcam</button>
+    </div>
+
+    <script>
+        let webcamActive = false;
+
+        // Display Current Date and Time
+        function updateDateTime() {
+                const dateTimeElement = document.getElementById("date-time");
+                const currentDateElement = document.getElementById("current-date");
+                const currentTimeElement = document.getElementById("current-time");
+
+                const now = new Date();
+                const date = now.toLocaleDateString();
+                const time = now.toLocaleTimeString();
+
+                currentDateElement.textContent = `${date}`;
+                currentTimeElement.textContent = `${time}`;
+            }
+            // Update Date and Time every second
+            setInterval(updateDateTime, 1000);
+            updateDateTime(); // Initial call to show date and time immediately
+
+        // Function to start the webcam feed
+        function startWebcam() {
+            document.getElementById("videoFeed").src = "/video_feed";  // Load webcam feed
+            document.getElementById("videoFeed").style.display = "block";  // Show the feed
+            webcamActive = true;
+            fetchAttendance();  // Fetch attendance automatically when webcam starts
+        }
+
+        // Function to stop the webcam feed
+        function stopWebcam() {
+            fetch('/stop_webcam');  // Stop the webcam via backend
+            document.getElementById("videoFeed").src = "";  // Clear the video feed
+            document.getElementById("videoFeed").style.display = "none";  // Hide the webcam feed
+            webcamActive = false;
+        }
+
+        // Function to fetch and update attendance table
+        function fetchAttendance() {
+            fetch('/get_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector("#attendance-table tbody");
+                    tableBody.innerHTML = "";  // Clear old data
+
+                    data.forEach(entry => {
+                        const row = document.createElement("tr");
+
+                        const nameCell = document.createElement("td");
+                        nameCell.textContent = entry.name;
+                        row.appendChild(nameCell);
+
+                        const dateCell = document.createElement("td");
+                        dateCell.textContent = entry.date;
+                        row.appendChild(dateCell);
+
+                        const timeCell = document.createElement("td");
+                        timeCell.textContent = entry.time;
+                        row.appendChild(timeCell);
+
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching attendance:', error));
+        }
+
+        setInterval(fetchAttendance, 3000);  // Refresh every 3 seconds
+    </script>
+</body>
+</html>
